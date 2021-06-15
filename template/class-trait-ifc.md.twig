@@ -1,0 +1,85 @@
+{% import "github_wiki.twig" as github_wiki %}
+<a name="{{ node.name|lower }}"></a>
+Full name:     **{{ node.FullyQualifiedStructuralElementName }}**    
+{% if node.parent and node.parent.FullyQualifiedStructuralElementName != '' %}Parent {{ nodetype }}:    **{{ github_wiki.ClassLink(node.parent, node.parent.FullyQualifiedStructuralElementName) }}**  
+{% endif %}
+{% if node.interfaces is not empty %}Implements:    **{{ node.interfaces|join(', ')|trim|raw }}**  
+{% endif %}
+{% if node.final %}*This {{ nodetype }} is marked as **final** and can't be subclassed*   
+{% endif %}
+{% if node.abstract %}*This is an **abstract** {{ nodetype }} that cannot be instantiated directly*   
+{% endif %}
+{% if node.deprecated %}**Warning:** *this {{ nodetype }} is **deprecated**. This means that this {{ nodetype }} will likely be removed in a future version.*  
+{% endif %}
+
+---
+
+**{{ node.summary|raw }}**
+
+{{ node.description|raw }}
+
+
+{% if node.tags.see is not empty or node.tags.link is not empty %}
+**See Also:**
+
+{% for see in node.tags.see %}
+* {{ see.reference }} {% if see.description %}- {{ see.description|raw }}{% endif %}
+
+{% endfor %}
+{% for link in node.tags.link %}
+* {{ link.link }} {% if link.description and link.description != link.link %}- {{ link.description|raw }}{% endif %}
+
+{% endfor %}
+
+{% endif %}{# node.tags.see || node.tags.link #}
+
+{# Check constants #}
+{% if node.constants|length > 0 %}
+
+## Constants
+
+| Constant | Value | Description |
+|:---      |:---  |:---  |
+{% for constant in node.constants %}
+|<a name="{{ constant.name|lower }}">`{{constant.name}}`|{{constant.value|replace({'|': '&#124;'})|raw}}|{{constant.summary|raw}}|
+{% endfor %}{# for constant #}
+{% endif %}{# if constants #}
+
+
+{% set methods = methods(node) %}
+{% set properties = properties(node) %}
+
+{% if methods is not empty or properties is not empty %}
+## Overview
+| Method | Description |
+|:---  |:---         |
+{% for property in properties(node)|sortByVisibility %}
+|{{ property.name }}|{{ property.summary|raw }}|
+{% endfor %}
+{% for method in methods(node)|sortByVisibility %}
+| [{{method.name}}](#{{method.name|lower}}) |{{ method.summary|replace({"\n": " ", "\r": " ", "\t": " "})|raw }}|
+{% endfor %}
+{% endif %}
+
+
+{% if node.methods|length > 0 %}
+## Methods
+
+{% for method in node.methods|sortByVisibility %}
+{% include 'method.md.twig' %}
+{% endfor %}
+{% endif %}{# if methods #}
+
+{# Check inherited methods #}
+{% if node.InheritedMethods|length > 0 %}
+
+## Inherited methods
+
+{% for method in node.InheritedMethods|sortByVisibility %}
+{# constructor(s) from parnet(s) doesn't matter ... #}
+{% if method.name != '__construct' %}
+{% include 'method.md.twig' %}
+{% endif %}{# if method.name != '__construct' #}
+{% endfor %}
+
+{% endif %}{# if InheritedMethods #}

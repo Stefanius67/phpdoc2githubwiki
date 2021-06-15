@@ -1,0 +1,47 @@
+{% import "github_wiki.twig" as github_wiki %}
+{% block content %}
+# {{project.name}}
+
+{% for namespace in project.indexes.namespaces|sort((a,b) => a.FullyQualifiedStructuralElementName <=> b.FullyQualifiedStructuralElementName) %}
+{% if namespace.classes|length > 0 or namespace.traits|length > 0 or namespace.interfaces|length > 0 %}
+
+### Namespace: {{ namespace.FullyQualifiedStructuralElementName }}
+
+{% if namespace.classes|length > 0 %}
+#### Classes
+
+| Class | Description |
+|---    |---          |
+{% for class in namespace.classes|sort((a,b) => a.FullyQualifiedStructuralElementName <=> b.FullyQualifiedStructuralElementName) %}
+| {{ github_wiki.ClassLink(class) }} | {{ class.summary|replace({'|': '&#124;'})|nl2br|replace({"\n": "", "\r": "", "\t": ""})|raw }}|
+{% endfor %}{# for class #}
+{% endif %}{# if classes.length #}
+
+{% if namespace.traits|length > 0 %}
+
+#### Traits
+
+| Trait | Description |
+|---    |---          |
+{% for trait in namespace.traits|sort((a,b) => a.FullyQualifiedStructuralElementName <=> b.FullyQualifiedStructuralElementName) %}
+| {{ github_wiki.TraitLink(trait) }} | {{ trait.summary|replace({'|': '&#124;'})|nl2br|replace({"\n": "", "\r": "", "\t": ""})|raw }}|
+{% endfor %}{# for trait #}
+
+{% endif %}{# if traits #}
+
+{% if namespace.interfaces|length > 0 %}
+
+#### Interfaces
+
+| Interface | Description |
+|---    |---          |
+{% for interface in namespace.interfaces|sort((a,b) => a.FullyQualifiedStructuralElementName <=> b.FullyQualifiedStructuralElementName) %}
+| {{ github_wiki.InterfaceLink(interface) }} | {{ interface.summary|replace({'|': '&#124;'})|nl2br|replace({"\n": "", "\r": "", "\t": ""})|raw }}|
+{% endfor %}{# for interace #}
+
+{% endif %}{# if interfaces #}
+
+{% endif %}{# if classes, traits, interfaces length #}
+{% endfor %}{# for namespace #}
+
+{% endblock %}
