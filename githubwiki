@@ -1,0 +1,29 @@
+#!/bin/bash
+# This title appears on the index page of the wiki
+docTitle='[Title for main page]'
+# The command to call phpDocumentor 3 (see readme.md for more information)
+phpdoccmd='[Name of the phpDocumentor command]'
+# the config file
+phpdocconfig='githubwiki.xml'
+# the path to the template (relative or absolute - WITHOUT/template subdir)
+templatedir='[path to the template]'
+# the path to the git wiki repository
+wikidir='[path to the local git wiki repository]'
+
+if [ $1 = '-b' ] || [ $1 = '-build' ]; then
+    echo Build github wiki
+    $phpdoccmd run -c $phpdocconfig --title "$docTitle" --visibility=public --ignore-tags=author --ignore-tags=version --ignore-tags=copyright --ignore-tags=codeCoverageIgnore --template=$templatedir/template
+fi
+
+if [ $1 = '-p' ] || [ $1 = '-publish' ]; then
+    echo commit all changes and push to wiki master
+    curdir=$PWD
+    cd $wikidir
+    git pull origin master
+    git add --all
+    git commit -a -m "phpDoc build $(date)"
+    git push origin master
+    cd $curdir
+fi
+
+

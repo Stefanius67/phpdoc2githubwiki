@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<phpdocumentor
+        configVersion="3"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="https://www.phpdoc.org"
+        xsi:noNamespaceSchemaLocation="https://docs.phpdoc.org/latest/phpdoc.xsd">
+    <paths>
+        <output>./[Projectname].wiki</output>
+        <cache>./cache</cache>
+    </paths>
+    <version number="latest">
+        <api>
+            <source dsn="[Base path to the project]">
+				<path>[First File or directory to scan]</path>
+				<path>[Second File or directory to scan]</path>
+				<path>[...]</path>
+				<path>[N-th File or directory to scan]</path>
+            </source>
+        </api>
+    </version>
+</phpdocumentor>
