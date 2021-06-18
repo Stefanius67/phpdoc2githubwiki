@@ -38,10 +38,10 @@ Full name:     **{{ node.FullyQualifiedStructuralElementName }}**
 
 ## Constants
 
-| Constant | Value | Description |
-|:---      |:---  |:---  |
+| Constant  | Description |
+|:---       |:---  |
 {% for constant in node.constants %}
-|<a name="{{ constant.name|lower }}">`{{constant.name}}`|{{constant.value|replace({'|': '&#124;'})|raw}}|{{constant.summary|raw}}|
+|<a name="{{ constant.name|lower }}">`{{constant.name}}`|{{constant.summary|raw}}|
 {% endfor %}{# for constant #}
 {% endif %}{# if constants #}
 
@@ -61,11 +61,12 @@ Full name:     **{{ node.FullyQualifiedStructuralElementName }}**
 {% endfor %}
 {% endif %}
 
-
+{% set constructor_found = false %}
 {% if node.methods|length > 0 %}
 ## Methods
 
 {% for method in node.methods|sortByVisibility %}
+{% if method.name == '__construct' %}{% set constructor_found = true %}{% endif %}
 {% include 'method.md.twig' %}
 {% endfor %}
 {% endif %}{# if methods #}
@@ -76,8 +77,9 @@ Full name:     **{{ node.FullyQualifiedStructuralElementName }}**
 ## Inherited methods
 
 {% for method in node.InheritedMethods|sortByVisibility %}
-{# constructor(s) from parnet(s) doesn't matter ... #}
-{% if method.name != '__construct' %}
+{# constructor(s) from parent(s) only matter if no found so far ... #}
+{% if method.name != '__construct' or constructor_found == false %}
+{% set constructor_found = true %}
 {% include 'method.md.twig' %}
 {% endif %}{# if method.name != '__construct' #}
 {% endfor %}
