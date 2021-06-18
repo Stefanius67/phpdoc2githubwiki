@@ -2,6 +2,7 @@
 ### {{ method.name }}
 {{ method.summary|raw }}
 {# Method signature #}
+
 ```php
 {% autoescape false %}
 {% if method.final %}final {% endif %}{{method.visibility}} {%if method.static%}static {% endif %}{{ method.parent.name }}::{{ method.name }}({% for argument in method.arguments %}
@@ -24,7 +25,7 @@
 | Parameter | Type | Description |
 |-----------|------|-------------|
 {% for argument in method.arguments %}
-| `{{ argument.name }}` | **{{ argument.type ? argument.type|replace({'|':' &#124; '})|raw }}** | {{ argument.description|replace({'|':'&#124;'})|nl2br|replace({"\n": "", "\r": "", "\t": ""})|raw }} |
+| `{{ argument.name }}` | **{{ argument.type ? argument.type|replace({'|':' &#124; '})|raw }}** | {{ github_wiki.FormatDescription(argument.description) }} |
 {% endfor %}
 {% endif %}{# method.arguments is not empty #}
 
