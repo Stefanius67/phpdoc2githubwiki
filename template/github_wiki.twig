@@ -4,8 +4,7 @@ Create github wiki link to class
 {% macro ClassLink(node, name = null) %}
 [{{ name | default(node.name) }}]({{ './class-' ~ node.Name }}){% endmacro %}
 
-{#
-Create github wiki link to trait
+{#Create github wiki link to trait
 #}
 {% macro TraitLink(node, name = null) %}
 [{{ name | default(node.name) }}]({{ './trait-' ~ node.Name }}){% endmacro %}
@@ -22,5 +21,13 @@ Create github wiki link from see reference
 {% macro SeeLink(node) %}
 {% set link = node.reference|split('::')|first %}
 {% set anchor = '' %}
-{% if node.reference|split('::')|length > 1 %}{% set anchor = '#' ~ node.reference|split('::')|last|lower %}{% endif %}
+{% if node.reference|split('::')|length > 1 %}{% set anchor = '#' ~ node.reference|split('::')|last|lower|trim('()') %}{% endif %}
 [{{ node.reference }}](class-{{ link|split('\\')|last ~ anchor }}){% endmacro %}
+
+{#
+Format description string
+argument.description|replace({'|':'&#124;'})|nl2br|replace({"\n": "", "\r": "", "\t": ""})|raw
+#}
+{% macro FormatDescription(text) %}
+{% autoescape false %}{{ text|replace({'|':'&#124;'})|replace({"\n": " ", "\r": " ", "\t": " "}) }}{% endautoescape %}{% endmacro %}
+
