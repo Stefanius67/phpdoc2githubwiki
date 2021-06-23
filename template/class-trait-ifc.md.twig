@@ -18,6 +18,17 @@ Full name:     **{{ node.FullyQualifiedStructuralElementName }}**
 
 {{ node.description|raw }}
 
+{# custom tag image ========= #}
+{% if node.tags.SKienImage is not empty %}
+{% for image in node.tags.SKienImage %}
+{% if image.description is not empty %}
+{{ github_wiki.Image(image) }}
+{% endif %}
+
+{% endfor %}
+
+{% endif %}{# node.tags.image #}
+{# end test image ========= #}
 
 {% if node.tags.see is not empty or node.tags.link is not empty %}
 **See Also:**

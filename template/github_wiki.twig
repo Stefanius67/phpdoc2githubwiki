@@ -31,3 +31,11 @@ argument.description|replace({'|':'&#124;'})|nl2br|replace({"\n": "", "\r": "", 
 {% macro FormatDescription(text) %}
 {% autoescape false %}{{ text|replace({'|':'&#124;'})|replace({"\n": " ", "\r": " ", "\t": " "}) }}{% endautoescape %}{% endmacro %}
 
+{#
+custom image
+argument.description|replace({'|':'&#124;'})|nl2br|replace({"\n": "", "\r": "", "\t": ""})|raw
+#}
+{% macro Image(image) %}
+{% set imagepath = './images/' %}
+![{{ image.description|lower|split('.')[0] }}]({{ imagepath ~ image.description }}){% endmacro %}
+
