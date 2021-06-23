@@ -17,4 +17,8 @@ github goes one step further with its wiki and provides code and documentation
 to keep at one central location. It gives the possibility of creating a clear 
 documentation with simple means:
 
-** [read more in the wiki for this repository...](https://github.com/Stefanius67/phpdoc2githubwiki/wiki) **
+ **[read more in the wiki for this repository...](https://github.com/Stefanius67/phpdoc2githubwiki/wiki)**
+ 
+ > **Note:**  
+ > Since this package doesn't contain any PHP code, no part of the wiki has been generated 
+ > with phpDocumentor and this template!
