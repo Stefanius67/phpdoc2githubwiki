@@ -1,0 +1,81 @@
+#!/bin/bash
+# The command to call phpDocumentor 3 (see readme.md / wiki for more information)
+phpdoccmd='[Name of the phpDocumentor command]'
+# the path to the git wiki repository
+wikidir='[path to the local git wiki repository]'
+
+show_usage()
+{
+    echo Usage:
+    echo -e '\tgithubwiki -s' 
+    echo -e '\tgithubwiki -sync:'
+    echo -e '\t\tsync local repo with remote bofore build'
+    echo 
+    echo -e '\tgithubwiki -b' 
+    echo -e '\tgithubwiki -build:'
+    echo -e '\t\tbuild the wiki markdown using phpDocumentor'
+    echo 
+    echo -e '\tgithubwiki -p'
+    echo -e '\tgithubwiki -publish:'
+    echo -e '\t\tpublish the wiki using git commandline'
+    echo 
+    echo -e '\tgithubwiki -a'
+    echo -e '\tgithubwiki -all:'
+    echo -e '\t\tperform the sync, build and publish steps in one call'
+}
+
+build_wiki()
+{
+    echo Build github wiki
+    $phpdoccmd run -c phpdoc.xml
+}
+
+sync_wiki()
+{
+	check_repo
+	echo Sync github wiki with remote
+	curdir=$PWD
+	cd $wikidir
+	git pull origin master
+	cd $curdir
+}
+
+publish_wiki()
+{
+	check_repo
+	echo commit all changes and push to wiki master
+	curdir=$PWD
+	cd $wikidir
+	git add --all
+	git commit -a -m "phpDoc build $(date)"
+	git push origin master
+	cd $curdir
+}
+
+check_repo()
+{
+    if [ ! -d $wikidir ]; then
+        echo "Can not find Directory ${wikidir}!"
+		exit
+    elif [ ! -d "${wikidir}/.git" ]; then
+        echo "Directory ${wikidir} does not contain a repository!"
+		exit
+	fi
+}
+
+if [ $# -ne 1 ]; then
+	show_usage
+elif [ $1 = '-b' ] || [ $1 = '-build' ]; then
+	build_wiki
+elif [ $1 = '-s' ] || [ $1 = '-sync' ]; then
+	sync_wiki
+elif [ $1 = '-p' ] || [ $1 = '-publish' ]; then
+	publish_wiki
+elif [ $1 = '-a' ] || [ $1 = '-all' ]; then
+	sync_wiki
+	build_wiki
+	publish_wiki
+else
+    echo unknown argument: $1
+fi
+
