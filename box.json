@@ -9,7 +9,7 @@
     "files": [
 		"githubwiki.php",
 		"autoloader.php",
-		"phpdoctemplate.xml",
+		"phpdoc.template.xml",
         "LICENSE"
     ],
     "git-version": "package_version",
