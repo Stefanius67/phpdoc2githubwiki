@@ -5,12 +5,12 @@
   <email>s.kientzler@online.de</email>
   <version>1.0.0</version>
   <transformations>
-    <transformation writer="twig" source="index.md.twig" artifact="class--Reference.md"/>
-    <transformation writer="twig" source="sidebar.md.twig" artifact="TemplateSidebar.md"/>
+    <transformation writer="twig" source="index.md.twig" artifact="Class--Reference.md"/>
+    <transformation writer="twig" source="sidebar.md.twig" artifact="Class--Reference-Sidebar.md"/>
     <transformation writer="twig" source="footer.md.twig" artifact="_Footer.md"/>
-    <transformation writer="twig" query="indexes.classes" source="class.md.twig" artifact="class-{{Name}}.md"/>
-    <transformation writer="twig" query="indexes.traits" source="trait.md.twig" artifact="trait-{{Name}}.md"/>
-    <transformation writer="twig" query="indexes.interfaces" source="interface.md.twig" artifact="interface-{{Name}}.md"/>
+    <transformation writer="twig" query="indexes.classes" source="class.md.twig" artifact="Class-{{Name}}.md"/>
+    <transformation writer="twig" query="indexes.traits" source="trait.md.twig" artifact="Trait-{{Name}}.md"/>
+    <transformation writer="twig" query="indexes.interfaces" source="interface.md.twig" artifact="Interface-{{Name}}.md"/>
   </transformations>
   <parameters>
     <parameter key="twig-debug">true</parameter>

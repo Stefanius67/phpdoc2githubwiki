@@ -2,18 +2,18 @@
 Create github wiki link to class
 #}
 {% macro ClassLink(node, name = null) %}
-[{{ name | default(node.name) }}]({{ './class-' ~ node.Name }}){% endmacro %}
+[{{ name | default(node.name) }}]({{ './Class-' ~ node.Name }}){% endmacro %}
 
 {#Create github wiki link to trait
 #}
 {% macro TraitLink(node, name = null) %}
-[{{ name | default(node.name) }}]({{ './trait-' ~ node.Name }}){% endmacro %}
+[{{ name | default(node.name) }}]({{ './Trait-' ~ node.Name }}){% endmacro %}
 
 {#
 Create github wiki link to interface
 #}
 {% macro InterfaceLink(node, name = null) %}
-[{{ name | default(node.name) }}]({{ './interface-' ~ node.Name }}){% endmacro %}
+[{{ name | default(node.name) }}]({{ './Interface-' ~ node.Name }}){% endmacro %}
 
 {#
 Create github wiki link from see reference
@@ -21,8 +21,19 @@ Create github wiki link from see reference
 {% macro SeeLink(node) %}
 {% set link = node.reference|split('::')|first %}
 {% set anchor = '' %}
+{% set description = node.reference %}
 {% if node.reference|split('::')|length > 1 %}{% set anchor = '#' ~ node.reference|split('::')|last|lower|trim('()') %}{% endif %}
-[{{ node.reference }}](class-{{ link|split('\\')|last ~ anchor }}){% endmacro %}
+{% if node.description and node.description != '' %}{% set description = node.description|raw %}{% endif %}
+[{{ description }}](Class-{{ link|split('\\')|last ~ anchor }}){% endmacro %}
+
+{#
+Create github wiki link from link reference
+#}
+{% macro LinkLink(node) %}
+{% set description = node.link %}
+{% if node.description and node.description != '' %}{% set description = node.description|raw %}{% endif %}
+{# MD-syntax (No target!):   [{{ description }}]({{ node.link }}) #}
+{% autoescape false %}<a target="_blank" href="{{ node.link }}">{{ description }}</a> {% endautoescape %}{% endmacro %}
 
 {#
 Format description string

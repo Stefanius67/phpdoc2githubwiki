@@ -2,7 +2,7 @@
 {% block content %}
 
   * [Home](./Home)
-  * [{{project.name}} Reference](./class--Reference)
+  * [{{project.name}} Reference](./Class--Reference)
 {% for namespace in project.indexes.namespaces|sort((a,b) => a.FullyQualifiedStructuralElementName <=> b.FullyQualifiedStructuralElementName) %}
 {% if namespace.classes|length > 0 or namespace.traits|length > 0 or namespace.interfaces|length > 0 %}
     * {{ namespace.FullyQualifiedStructuralElementName }}
