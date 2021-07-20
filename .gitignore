@@ -1,2 +1,7 @@
+/.settings/
+/.buildpath
+/.project
 /wiki/
 /phpdoc.xsd
+/githubwiki-phpdoc.xml
+/phpdoc-win.xml

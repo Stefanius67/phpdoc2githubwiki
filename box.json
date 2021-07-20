@@ -1,0 +1,19 @@
+{
+    "alias": "githubwiki.phar",
+    "chmod": "0755",
+    "directories": [
+		"SKien",
+		"lordgnu",
+		"template"
+	],
+    "files": [
+		"githubwiki.php",
+		"autoloader.php",
+		"phpdoctemplate.xml",
+        "LICENSE"
+    ],
+    "git-version": "package_version",
+    "main": "githubwiki.php",
+    "output": "bin/githubwiki.phar",
+    "stub": true
+}

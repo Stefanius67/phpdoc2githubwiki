@@ -1,50 +1,37 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<phpdocumentor
-        configVersion="3"
-        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-        xmlns="https://www.phpdoc.org"
-        xsi:noNamespaceSchemaLocation="https://docs.phpdoc.org/latest/phpdoc.xsd">
-        
-    <!-- title of your wiki/package -->
-    <title>Formgenerator</title>
+<githubwiki>
+    <title>GitHubWikii Creator</title>
+	<options>
+		<verbose>true</verbose>
+		<debug>false</debug>
+		<norun>false</norun>
+	</options>
+	
+	<phpdoc>
+		<command>phpdoc30</command>
+		<templatex>./template</templatex>
+	</phpdoc>
+	
     <paths>
-        <!-- root of the wiki repository -->
-        <output>./[Projectname].wiki</output>
-        <cache>./cache</cache>
+        <output>./wiki/phpdoc2githubwiki.wiki</output>
+        <cache>./wiki/cache</cache>
+        <project></project>
     </paths>
-    <version number="latest">
-        <api>
-            <!-- all source files to scan -->
-            <source dsn="[Base path to the project]">
-				<path>[First File or directory to scan]</path>
-				<path>[Second File or directory to scan]</path>
-				<path>[...]</path>
-				<path>[N-th File or directory to scan]</path>
-            </source>
-            
-            <!-- 
-                Setup the visibility level you want your documentation for 
-                 - multiple levels can be specified
-            -->
-            <visibility>public</visibility>
-            <!-- <visibility>api</visibility> -->
-            <!-- <visibility>protected</visibility> -->
-            <!-- <visibility>private</visibility> -->
-            <!-- <visibility>internal</visibility> -->
-            <!-- <visibility>hidden</visibility> -->
-            
-            <!-- 
-                Setup the tags that shoud be ignored while scaning source code
-                - multiple tags can be specified
-            -->
-            <ignore-tags>
-                <ignore-tag>author</ignore-tag>
-                <ignore-tag>version</ignore-tag>
-                <ignore-tag>copyright</ignore-tag>
-                <ignore-tag>codeCoverageIgnore</ignore-tag>
-            </ignore-tags>
-        </api>
-    </version>
-    <!-- the path to the template from the phpdoc2githubwiki repository -->
-    <template name="[path-to-phpdoc2githubwiki-repository]/template"/>
-</phpdocumentor>
+	
+	<source>
+		<path>SKien/GitHubWiki</path>
+		<path>SKien/Config</path>
+		<path>lordgnu/CLICommander</path>
+	</source>
+
+	<visibilities>
+		<visibility>public</visibility>
+	</visibilities>            
+	
+	<ignore-tags>
+		<ignore-tag>author</ignore-tag>
+		<ignore-tag>version</ignore-tag>
+		<ignore-tag>copyright</ignore-tag>
+		<ignore-tag>codeCoverageIgnore</ignore-tag>
+	</ignore-tags>
+</githubwiki>
