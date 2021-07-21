@@ -1,0 +1,13 @@
+{yellow}Usage:{reset}
+
+ githubwiki [options]
+
+{yellow}Options:{reset}
+{lightgreen} --config [path]     {reset} Alternative configuration file.
+{lightgreen} --title [text]      {reset} Title of the wiki (if containing 
+                      blanks set into double quotes) 
+{lightgreen} --phpdoc [command]  {reset} The command to launch phpDocumentor
+{lightgreen} --wiki [path]       {reset} the path to the wiki
+{lightgreen} --help     -h       {reset} Display this help message
+{lightgreen} --quiet    -q       {reset} Do not output any message
+{lightgreen} --verbose  -v       {reset} More detailed output

@@ -29,9 +29,12 @@ class GitHubWikiCreator
     protected const CACHE_PATH = './cache';
     protected const PHPDOC_CONFIG_TEMPLATE = 'phpdoc.template.xml';
     protected const PHPDOC_AUTOCONFIG = 'phpdoc-auto.xml';
+    protected const HELP_FILE = 'githubwiki-help.txt';
     protected const MSG_ALLWAYS = 0;
     protected const MSG_VERBOSE = 1;
     protected const MSG_DEBUG = 2;
+    protected const UX_NULLDEVICE = '/dev/null';
+    protected const WIN_NULLDEVICE = 'nul';
 
     /** @var CLICommander used to parse cmdline arguments and for console output     */
     protected CLICommander $oCli;
@@ -48,11 +51,11 @@ class GitHubWikiCreator
     /** @var string phpDocumentor template to use */
     protected string $strPhpDocTemplate = '';
     /** @var string the directory where the wiki repository to find     */
-    protected string $strWikiPath;
+    protected string $strWikiPath = '';
     /** @var string the directory for cache and temp files     */
-    protected string $strCachePath;
+    protected string $strCachePath = '';
     /** @var string project directory containing the source     */
-    protected string $strProjectPath;
+    protected string $strProjectPath = '';
     /** @var string errors while validation    */
     protected string $strError = '';
     /** @var bool generate more detailed output    */
@@ -60,9 +63,12 @@ class GitHubWikiCreator
     /** @var bool generate debug output    */
     protected bool $bDebug = false;
     /** @var bool silent operation    */
-    protected bool $bSilent = false;
+    protected bool $bQuiet = false;
     /** @var bool suppress git operations    */
     protected bool $bSuppressRun = false;
+
+    /** @var string Null dece depends on operating system    */
+    private string $strNullDev = '';
 
     /**
      * Create instance and initialize CLI-commander property.
@@ -70,15 +76,65 @@ class GitHubWikiCreator
      */
     public function __construct(CLICommander $oCli)
     {
+        if (php_sapi_name() !== 'cli') {
+            trigger_error('!! this builder is designed to run with PHP CLI !!', E_USER_ERROR);
+        }
+        $this->strNullDev = (strtoupper(substr(PHP_OS, 0, 3)) === 'WIN') ? self::WIN_NULLDEVICE : self::UX_NULLDEVICE;
+
         $this->oCli = $oCli;
     }
 
     /**
-     * Only display current version.
+     * Run the builder
      */
-    public function displayVersion() : void
+    public function run() : bool
+    {
+        if ($this->oCli->ArgumentPassed('version') || $this->oCli->ArgumentPassed('V')) {
+            $this->displayVersion();
+            return true;
+        }
+
+        $this->writeConsole("{lightcyan||bold}GitHubWiki creator v" . self::VERSION . " by Stefan Kientzler{reset}\n");
+        if ($this->oCli->ArgumentPassed('help') || $this->oCli->ArgumentPassed('h')) {
+            return $this->displayHelp();
+        }
+
+        $this->init();
+        if ($this->isValid()) {
+            if ($this->build()) {
+                $this->writeConsole("> wiki \"" . $this->strTitle .  "\" successfull generated.\n");
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Display current version.
+     */
+    protected function displayVersion() : void
     {
         $this->writeConsole("GitHubWiki creator v" . self::VERSION);
+    }
+
+    /**
+     * Display the help.
+     */
+    protected function displayHelp() : bool
+    {
+        if (!empty(\Phar::running())) {
+            $strHelpFile = \Phar::running() . '/' . self::HELP_FILE;
+        } else {
+            $strHelpFile = realpath(__DIR__ . '/../../' . self::HELP_FILE);
+        }
+        $strHELP = @file_get_contents($strHelpFile);
+        if ($strHELP === false) {
+            $this->writeError("- Can't open the helpfile [" . $strHelpFile . "]");
+            return false;
+        }
+
+        $this->writeConsole($strHELP);
+        return true;
     }
 
     /**
@@ -90,100 +146,11 @@ class GitHubWikiCreator
      *      the specified config did not exist </li>
      * <li> default values (if defined) </li></ol>
      */
-    public function init() : void
+    protected function init() : void
     {
-        $this->writeConsole("{cyan||bold}GitHubWiki creator v1.0.0 by Stefan Kientzler{reset}\n");
-        $this->getConfig();
-        $this->readConfig();
+        $this->getConfigFile();
+        $this->readConfigFile();
         $this->readCmdlineArgs();
-
-        // All path must be absolute for phpDocumentor
-        $this->strWikiPath = $this->makeAbsolutePath($this->strWikiPath);
-        $this->strCachePath = $this->makeAbsolutePath($this->strCachePath);
-        $this->strProjectPath = $this->makeAbsolutePath($this->strProjectPath);
-
-        $this->writeConsole("> creating GitHub wiki {cyan||bold}[" . $this->strTitle . "] in [" . $this->strWikiPath. "]{reset}", self::MSG_VERBOSE);
-        if (!empty($this->strConfigFile)) {
-            $this->writeConsole("> using config file {cyan||bold}[" . $this->strConfigFile . "]{reset}", self::MSG_VERBOSE);
-        }
-    }
-
-    /**
-     * Create absolute path.
-     * Check whether the path is relative and change it to the absolute path based on
-     * the current working directory.
-     * On UX systems absolute path always begin with the DIRECTORY_SEPARATOR. On Windows
-     * absolute path may also begin with a drive letter and a ':'.
-     * @param string $strPath
-     * @return string
-     */
-    protected function makeAbsolutePath(string $strPath) : string
-    {
-        $strPath = rtrim($strPath, DIRECTORY_SEPARATOR);
-        if (substr($strPath, 0, 1) == DIRECTORY_SEPARATOR || substr($strPath, 1, 1) == ':') {
-            return $strPath;
-        }
-        $strPath = getcwd() . DIRECTORY_SEPARATOR . $strPath;
-        return realpath($strPath);
-    }
-
-    /**
-     * Check the configuration and the environment.
-     * To run the creator: <ul>
-     * <li> the output path for the wiki must <ul>
-     *     <li> be specified </li>
-     *     <li> exist </li>
-     *     <li> is a directory (not a file!) </li>
-     *     <li> contain a git repository </ul></li>
-     * <li> git must be installed </li>
-     * <li> phpDocumentor <ul>
-     *     <li>must be installed </li>
-     *     <li>must be at least version 3 </li></ul></li>
-     * </ul>
-     * @return bool
-     */
-    public function isValid() : bool
-    {
-        $strError = $this->validateGit();
-        $strError .= "\n" . $this->validatePhpDocumentor();
-        $strError = trim($strError);
-        $strError .= "\n" . $this->validateWikiPath();
-        $strError = trim($strError);
-        if (empty($strError)) {
-            if (empty($this->strPhpDocTemplate)) {
-                $strError .= "\n" . $this->copyTemplate();
-                $strError = trim($strError);
-            }
-            if (empty($this->strPhpDocConfigFile)) {
-                $strError .= "\n" . $this->createPhpDocConfig();
-                $strError = trim($strError);
-            }
-        }
-        if (!empty($strError)) {
-            $this->writeConsole("{white|red}\n" . $strError . "{reset}");
-        }
-        return empty($strError);
-    }
-
-    /**
-     * Build the github wiki.
-     * Steps to perform: <ul>
-     * <li> sync local and remote repo <ul>
-     *     <li> commit local changes made manually (and added images) </li>
-     *     <li> pull current version from remote </li></ul></li>
-     * <li> generate the wiki using phpDocumentor </li>
-     * <li> commit and push generated wiki </li>
-     * </ul>
-     */
-    public function build() : void
-    {
-        if (!$this->pullRepo()) {
-            return;
-        }
-        if (!$this->generateWiki()) {
-            return;
-        }
-        $this->pushRepo();
     }
 
     /**
@@ -195,7 +162,7 @@ class GitHubWikiCreator
      * this before reading local one (merge)
      * If no config can be found, a NullConfig is created.
      */
-    protected function getConfig() : void
+    protected function getConfigFile() : void
     {
         // config specified as cmdline arg?
         $this->strConfigFile = self::CONFIG_FILE;
@@ -218,7 +185,7 @@ class GitHubWikiCreator
      * Read the given config.
      * Not existing values are initialized with default values, if defined.
      */
-    protected function readConfig() : void
+    protected function readConfigFile() : void
     {
         // read from config or initialize with default
         $this->strTitle = $this->oConfig->getString('title', self::TITLE);
@@ -230,6 +197,7 @@ class GitHubWikiCreator
         $this->strProjectPath = $this->oConfig->getString('paths.project');
         $this->bVerbose = $this->oConfig->getBool('options.verbose');
         $this->bDebug = $this->oConfig->getBool('options.debug');
+        $this->bQuiet = $this->oConfig->getBool('options.quiet');
         $this->bSuppressRun = $this->oConfig->getBool('options.norun');
     }
 
@@ -245,8 +213,9 @@ class GitHubWikiCreator
         $this->strPhpDocCmd = $this->getArgumentValue('phpdoc', $this->strPhpDocCmd);
         $this->strWikiPath = $this->getArgumentValue('wiki', $this->strWikiPath);
         $this->bVerbose = $this->oCli->ArgumentPassed('verbose') || $this->oCli->ArgumentPassed('v') || $this->bVerbose;
-        $this->bDebug = $this->oCli->ArgumentPassed('debug') || $this->bDebug;
-        $this->bSilent = $this->oCli->ArgumentPassed('silent');
+        $this->bDebug = $this->oCli->ArgumentPassed('debug') || $this->oCli->ArgumentPassed('d') || $this->bDebug;
+        $this->bQuiet = $this->oCli->ArgumentPassed('quiet') || $this->oCli->ArgumentPassed('q') || $this->bQuiet;
+        $this->bSuppressRun = $this->oCli->ArgumentPassed('norun') || $this->oCli->ArgumentPassed('n') || $this->bSuppressRun;
     }
 
     /**
@@ -267,22 +236,50 @@ class GitHubWikiCreator
     }
 
     /**
-     * Validate the wiki path.
-     * @return string
+     * Check the configuration and the environment.
+     * To run the creator: <ul>
+     * <li> git must be installed </li>
+     * <li> phpDocumentor <ul>
+     *     <li>must be installed </li>
+     *     <li>must be at least version 3 </li></ul></li>
+     * <li> the output path for the wiki must <ul>
+     *     <li> be specified </li>
+     *     <li> exist </li>
+     *     <li> is a directory (not a file!) </li>
+     *     <li> contain a git repository </li></ul></li>
+     * </ul>
+     * @return bool
      */
-    protected function validateWikiPath() : string
+    protected function isValid() : bool
     {
-        $strError = '';
-        if (empty($this->strWikiPath)) {
-            $strError = "- No wiki path specified!";
-        } elseif (!file_exists($this->strWikiPath)) {
-            $strError = "- The wiki path [" . $this->strWikiPath . "] does not exist!";
-        } elseif (!is_dir($this->strWikiPath)) {
-            $strError = "- [" . $this->strWikiPath . "] must be a directory!";
-        } elseif (!file_exists($this->strWikiPath . DIRECTORY_SEPARATOR . '.git')) {
-            $strError = "- The path [" . $this->strWikiPath . "] doesn't contain a git repository!";
+        // check if git is installed
+        $strError = $this->validateGit();
+
+        // check if phpDocumentor is installed and min. Version 3.0
+        $strError .= "\n" . $this->validatePhpDocumentor();
+        $strError = trim($strError);
+
+        // check if wiki path is given, exist and contains a repository
+        $strError .= "\n" . $this->validateWikiPath();
+        $strError = trim($strError);
+
+        // so far we havn't created or modified any file or directory. if anything
+        // is wrong or missing it doesn't make sense to continue - write message and break!
+        if (!empty($strError)) {
+            $this->writeError($strError);
+            return false;
         }
-        return $strError;
+
+        // Now we can check the settings for the phpDocumentor
+        // - cache path
+        // - phpDocumentor config file
+        // - template
+        $strError = $this->validatePhpDocumentorConfig();
+        if (!empty($strError)) {
+            $this->writeError($strError);
+            return false;
+        }
+        return true;
     }
 
     /**
@@ -292,7 +289,7 @@ class GitHubWikiCreator
     protected function validateGit() : string
     {
         $strError = '';
-        if (shell_exec('git --version 2>nul') === null) {
+        if (shell_exec('git --version 2>'. $this->strNullDev) === null) {
             $strError = "- git not found!";
         }
         return $strError;
@@ -302,84 +299,86 @@ class GitHubWikiCreator
      * Validate phpDocumentor.
      * - check if can be called
      * - check for version >= 3
-     * - check for cache path and try to create, if not exist
-     * - check for existence of external phpdoc confifuration, if specified
-     * - check for existence of template, if specified
      * @return string
      */
     protected function validatePhpDocumentor() : string
     {
         $strError = '';
-        $strResult = shell_exec($this->strPhpDocCmd . ' --version 2>nul');
+        $strResult = shell_exec($this->strPhpDocCmd . ' --version 2>'. $this->strNullDev);
         if ($strResult === null) {
             $strError = "- phpDocumentor not found! Command: " . $this->strPhpDocCmd;
         } elseif (substr($strResult, 0, 16) != 'phpDocumentor v3') {
             $strError = "- at least version 3.0 of phpDocumentor is needed! found " . $strResult;
         }
-
-        // try to create cache directory if not exist
-        if (!file_exists($this->strCachePath)) {
-            if (!@mkdir($this->strCachePath, 0777, true)) {
-                $strError .= "\n- Cannot create the cache path [" . $this->strCachePath . "]!";
-            }
-        }
-        if (!is_dir($this->strCachePath)) {
-            $strError .= "\n- [" . $this->strCachePath . "] must be a directory!";
-        }
-
-        // check for existence of external phpdoc confifuration, if specified
-        if (!empty($this->strPhpDocConfigFile) && !file_exists($this->strPhpDocConfigFile)) {
-            $strError .= "\n- phpDocumentor configuration [" . $this->strPhpDocConfigFile ."] not found!";
-        }
-
-        // check for existence of template, if specified
-        if (!empty($this->strPhpDocTemplate) && !file_exists($this->strPhpDocTemplate)) {
-            $strError .= "\n- phpDocumentor template [" . $this->strPhpDocTemplate ."] not found!";
-        }
-        return trim($strError);
+        return $strError;
     }
 
     /**
-     * Create the phpDocumentor config file from our configuration.
-     * If no external phpDocumentor config file is specified, we create one
-     * using all information from our config in the cache directory.
+     * Validate the wiki path.
      * @return string
      */
-    protected function createPhpDocConfig() : string
+    protected function validateWikiPath() : string
     {
-        $strTemplate = self::PHPDOC_CONFIG_TEMPLATE;
-        if (!empty(\Phar::running())) {
-            $strTemplate = \Phar::running() . '/' . $strTemplate;
+        $strError = '';
+        if (empty($this->strWikiPath)) {
+            $strError = "- No wiki path specified!";
+        } else {
+            $this->strWikiPath = $this->makeAbsolutePath($this->strWikiPath);
+            if (!file_exists($this->strWikiPath)) {
+                $strError = "- The wiki path [" . $this->strWikiPath . "] does not exist!";
+            } elseif (!is_dir($this->strWikiPath)) {
+                $strError = "- [" . $this->strWikiPath . "] must be a directory!";
+            } elseif (!file_exists($this->strWikiPath . DIRECTORY_SEPARATOR . '.git')) {
+                $strError = "- The path [" . $this->strWikiPath . "] doesn't contain a git repository!";
+            }
         }
-        $strXML = @file_get_contents($strTemplate);
-        if ($strXML === false) {
-            return "- Can't open the template file [" . self::PHPDOC_CONFIG_TEMPLATE . "]";
-        }
-        // replace some placeholders ...
-        $strXML = str_replace('{title}', $this->strTitle, $strXML);
-        $strXML = str_replace('{path.output}', $this->strWikiPath, $strXML);
-        $strXML = str_replace('{path.cache}', $this->strCachePath, $strXML);
-        $strXML = str_replace('{path.project}', $this->strProjectPath, $strXML);
-        $strXML = str_replace('{template}', $this->strPhpDocTemplate, $strXML);
+        return $strError;
+    }
 
-        // ... create DOM document ...
-        $oDOMDoc = new \DOMDocument();
-        $oDOMDoc->preserveWhiteSpace = false;
-        $oDOMDoc->formatOutput = true;
-        if ($oDOMDoc->loadXML($strXML) === false) {
-            return "- Can't create DOM document!";
+    /**
+     * Validate phpDocumentor configuration.
+     * - check for cache path and try to create, if not exist
+     * - check for existence of external phpdoc confifuration, if specified
+     * - check for existence of template, if specified
+     * @return string
+     */
+    protected function validatePhpDocumentorConfig() : string
+    {
+        $strError = '';
+
+        // the pathes must be absolute for phpDocumentor
+        $this->strCachePath = $this->makeAbsolutePath($this->strCachePath);
+        $this->strProjectPath = $this->makeAbsolutePath($this->strProjectPath);
+
+        // try to create cache directory if not exist
+        // If something is wrong with the cache directory, we abort because the following
+        // code assumes an available directory
+        if (!file_exists($this->strCachePath)) {
+            if (!@mkdir($this->strCachePath, 0777, true)) {
+                return "- Cannot create the cache path [" . $this->strCachePath . "]!";
+            }
+        } elseif (!is_dir($this->strCachePath)) {
+            return "- [" . $this->strCachePath . "] must be a directory!";
         }
 
-        // ... and insert some dynamic nodes from configuration
-        $this->addChildNodes($oDOMDoc, 'source', 'source.path', 'path');
-        $this->addChildNodes($oDOMDoc, 'ignore-tags', 'ignore-tags.ignore-tag', 'ignore-tag');
-        $this->addChildNodes($oDOMDoc, 'api', 'visibilities.visibility', 'visibility');
+        // the template must be checked before checking/creating the config:
+        // -> $this->strPhpDocTemplate may be changed by copyTemplate() and is used
+        //    in createPhpDocConfig() !!
 
-        $this->strPhpDocConfigFile = $this->strCachePath . '/' . self::PHPDOC_AUTOCONFIG;
-        if (!@$oDOMDoc->save($this->strPhpDocConfigFile)) {
-            return "- Can't write phpDocumentor config [" . $this->strPhpDocConfigFile . "]!";
+        // check for existence of template, if specified or copy the local template to the cache path
+        if (empty($this->strPhpDocTemplate)) {
+            $strError = $this->copyTemplate();
+        } elseif (!file_exists($this->strPhpDocTemplate)) {
+            $strError = "- phpDocumentor template [" . $this->strPhpDocTemplate ."] not found!";
         }
-        return '';
+
+        // check for existence of external phpdoc confifuration, if specified or auto create
+        if (empty($this->strPhpDocConfigFile)) {
+            $strError .= "\n" . $this->createPhpDocConfig();
+        } elseif(!file_exists($this->strPhpDocConfigFile)) {
+            $strError .= "\n- phpDocumentor configuration [" . $this->strPhpDocConfigFile ."] not found!";
+        }
+        return trim($strError);
     }
 
     /**
@@ -412,6 +411,77 @@ class GitHubWikiCreator
         $this->strPhpDocTemplate = $strDstPath;
 
         return '';
+    }
+
+    /**
+     * Create the phpDocumentor config file from our configuration.
+     * If no external phpDocumentor config file is specified, we create one
+     * using all information from our config in the cache directory.
+     * @return string
+     */
+    protected function createPhpDocConfig() : string
+    {
+        if (!empty(\Phar::running())) {
+            $strConfigTemplate = \Phar::running() . '/' . self::PHPDOC_CONFIG_TEMPLATE;
+        } else {
+            $strConfigTemplate = realpath(__DIR__ . '/../../' . self::PHPDOC_CONFIG_TEMPLATE);
+        }
+        $strXML = @file_get_contents($strConfigTemplate);
+        if ($strXML === false) {
+            return "- Can't open the template file [" . $strConfigTemplate . "]";
+        }
+        // replace some placeholders ...
+        $strXML = str_replace('{title}', $this->strTitle, $strXML);
+        $strXML = str_replace('{path.output}', $this->strWikiPath, $strXML);
+        $strXML = str_replace('{path.cache}', $this->strCachePath, $strXML);
+        $strXML = str_replace('{path.project}', $this->strProjectPath, $strXML);
+        $strXML = str_replace('{template}', $this->strPhpDocTemplate, $strXML);
+
+        // ... create DOM document ...
+        $oDOMDoc = new \DOMDocument();
+        $oDOMDoc->preserveWhiteSpace = false;
+        $oDOMDoc->formatOutput = true;
+        if ($oDOMDoc->loadXML($strXML) === false) {
+            return "- Can't create DOM document!";
+        }
+
+        // ... and insert some dynamic nodes from configuration
+        $this->addChildNodes($oDOMDoc, 'source', 'source.path', 'path');
+        $this->addChildNodes($oDOMDoc, 'ignore-tags', 'ignore-tags.ignore-tag', 'ignore-tag');
+        $this->addChildNodes($oDOMDoc, 'api', 'visibilities.visibility', 'visibility');
+
+        $this->strPhpDocConfigFile = $this->strCachePath . '/' . self::PHPDOC_AUTOCONFIG;
+        if (!@$oDOMDoc->save($this->strPhpDocConfigFile)) {
+            return "- Can't write phpDocumentor config [" . $this->strPhpDocConfigFile . "]!";
+        }
+        return '';
+    }
+
+    /**
+     * Build the github wiki.
+     * Steps to perform: <ul>
+     * <li> sync local and remote repo <ul>
+     *     <li> commit local changes made manually (and added images) </li>
+     *     <li> pull current version from remote </li></ul></li>
+     * <li> generate the wiki using phpDocumentor </li>
+     * <li> commit and push generated wiki </li>
+     * </ul>
+     * @return bool
+     */
+    protected function build() : bool
+    {
+        $this->writeConsole("> creating GitHub wiki {cyan}\"" . $this->strTitle . "\"{reset} in {cyan}[" . $this->strWikiPath. "]{reset}", self::MSG_VERBOSE);
+        if (!empty($this->strConfigFile)) {
+            $this->writeConsole("> using config file {cyan}[" . $this->strConfigFile . "]{reset}", self::MSG_VERBOSE);
+        }
+
+        if (!$this->pullRepo()) {
+            return false;
+        }
+        if (!$this->generateWiki()) {
+            return false;
+        }
+        return $this->pushRepo();
     }
 
     /**
@@ -466,7 +536,7 @@ class GitHubWikiCreator
     {
         $strCWD = getcwd();
         if ($strCWD === false) {
-            $this->writeConsole("{white|red}- Error getting current working directory!{reset}");
+            $this->writeError("- Error getting current working directory!");
             return false;
         }
         chdir($this->strWikiPath);
@@ -496,7 +566,7 @@ class GitHubWikiCreator
         $this->writeConsole("> generate the wiki");
         $strCommand = $this->strPhpDocCmd . ' run -c ' . $this->strPhpDocConfigFile . ' 2>&1';
         if ($this->bSuppressRun) {
-            $this->writeConsole("{yellow}  phpDocumentor > suppressed run (" . $strCommand . ")!{reset}", self::MSG_VERBOSE);
+            $this->writeConsole("{lightyellow}  phpDocumentor > suppressed run (" . $strCommand . ")!{reset}", self::MSG_VERBOSE);
             return true;
         }
         $aOutput = array();
@@ -508,9 +578,9 @@ class GitHubWikiCreator
         }
         $strResponse = rtrim($strResponse);
         if (!empty($strResponse)) {
-            $this->writeConsole("{yellow}" . $strResponse . "{reset}", self::MSG_VERBOSE);
+            $this->writeConsole("{lightyellow}" . $strResponse . "{reset}", self::MSG_VERBOSE);
         }
-        $strColor = ($iResult == 0) ? '{green}' : '{red}';
+        $strColor = ($iResult == 0) ? '{lightgreen}' : '{lightred}';
         $this->writeConsole($strColor ."  phpDocumentor > result: " . $iResult . "{reset}", self::MSG_DEBUG);
         return ($iResult == 0);
     }
@@ -523,7 +593,7 @@ class GitHubWikiCreator
     {
         $strCWD = getcwd();
         if ($strCWD === false) {
-            $this->writeConsole("{white|red}- Error getting current working directory!{reset}");
+            $this->writeError("- Error getting current working directory!");
             return false;
         }
         chdir($this->strWikiPath);
@@ -549,7 +619,7 @@ class GitHubWikiCreator
     protected function execGitCommand(string $strCommand) : int
     {
         if ($this->bSuppressRun) {
-            $this->writeConsole("{yellow}  git > suppressed command: " . $strCommand . "{reset}", self::MSG_VERBOSE);
+            $this->writeConsole("{lightyellow}  git > suppressed command: " . $strCommand . "{reset}", self::MSG_VERBOSE);
             return 0;
         }
         $aOutput = array();
@@ -561,9 +631,9 @@ class GitHubWikiCreator
         }
         $strResponse = rtrim($strResponse);
         if (!empty($strResponse)) {
-            $this->writeConsole("{yellow}" . $strResponse . "{reset}", self::MSG_VERBOSE);
+            $this->writeConsole("{lightyellow}" . $strResponse . "{reset}", self::MSG_VERBOSE);
         }
-        $strColor = ($iResult == 0) ? '{green}' : '{red}';
+        $strColor = ($iResult == 0) ? '{lightgreen}' : '{lightred}';
         $this->writeConsole($strColor ."  git > result: " . $iResult . " (command: " . $strCommand . "){reset}", self::MSG_DEBUG);
         return $iResult;
     }
@@ -575,7 +645,7 @@ class GitHubWikiCreator
      */
     protected function writeConsole(string $strText, int $iLevel = self::MSG_ALLWAYS) : void
     {
-        if ($this->bSilent) {
+        if ($this->bQuiet) {
             return;
         }
         $bShow = $iLevel == self::MSG_ALLWAYS;
@@ -584,5 +654,36 @@ class GitHubWikiCreator
         if ($bShow) {
             $this->oCli->WriteTemplate($strText);
         }
+    }
+
+    /**
+     * Write error to console.
+     * @param string $strError
+     */
+    protected function writeError(string $strError) : void
+    {
+        $this->writeConsole("{white|red}\n" . $strError . "{reset}\n");
+    }
+
+    /**
+     * Create absolute path.
+     * Check whether the path is relative and change it to the absolute path based on
+     * the current working directory.
+     * On UX systems absolute path always begin with the DIRECTORY_SEPARATOR. On Windows
+     * absolute path may also begin with a drive letter and a ':'.
+     * @param string $strPath
+     * @return string
+     */
+    protected function makeAbsolutePath(string $strPath) : string
+    {
+        if (empty($strPath) || $strPath == ('.' . DIRECTORY_SEPARATOR)) {
+            return getcwd();
+        }
+        $strPath = rtrim($strPath, DIRECTORY_SEPARATOR);
+        if (substr($strPath, 0, 1) == DIRECTORY_SEPARATOR || substr($strPath, 1, 1) == ':') {
+            return $strPath;
+        }
+        $strPath = getcwd() . DIRECTORY_SEPARATOR . $strPath;
+        return realpath($strPath);
     }
 }

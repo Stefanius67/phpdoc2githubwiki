@@ -10,7 +10,7 @@
 		"githubwiki.php",
 		"autoloader.php",
 		"phpdoc.template.xml",
-        "LICENSE"
+        "githubwiki-help.txt"
     ],
     "git-version": "package_version",
     "main": "githubwiki.php",
