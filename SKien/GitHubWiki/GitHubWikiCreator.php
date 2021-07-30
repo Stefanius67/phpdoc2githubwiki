@@ -22,7 +22,7 @@ use lordgnu\CLICommander\CLICommander;
  */
 class GitHubWikiCreator
 {
-    protected const VERSION = '1.0.0';
+    protected const VERSION = '1.0.1';
     protected const TITLE = 'Class reference';
     protected const PHPDOC_CMD = 'phpDocumentor.phar';
     protected const CONFIG_FILE = 'githubwiki.xml';
@@ -346,10 +346,6 @@ class GitHubWikiCreator
     {
         $strError = '';
 
-        // the pathes must be absolute for phpDocumentor
-        $this->strCachePath = $this->makeAbsolutePath($this->strCachePath);
-        $this->strProjectPath = $this->makeAbsolutePath($this->strProjectPath);
-
         // try to create cache directory if not exist
         // If something is wrong with the cache directory, we abort because the following
         // code assumes an available directory
@@ -360,6 +356,10 @@ class GitHubWikiCreator
         } elseif (!is_dir($this->strCachePath)) {
             return "- [" . $this->strCachePath . "] must be a directory!";
         }
+
+        // the pathes must be absolute for phpDocumentor
+        $this->strCachePath = $this->makeAbsolutePath($this->strCachePath);
+        $this->strProjectPath = $this->makeAbsolutePath($this->strProjectPath);
 
         // the template must be checked before checking/creating the config:
         // -> $this->strPhpDocTemplate may be changed by copyTemplate() and is used
@@ -683,7 +683,7 @@ class GitHubWikiCreator
         if (substr($strPath, 0, 1) == DIRECTORY_SEPARATOR || substr($strPath, 1, 1) == ':') {
             return $strPath;
         }
-        $strPath = getcwd() . DIRECTORY_SEPARATOR . $strPath;
-        return realpath($strPath);
+        $strPath = realpath(getcwd() . DIRECTORY_SEPARATOR . $strPath);
+        return $strPath !== false ? $strPath : '';
     }
 }
