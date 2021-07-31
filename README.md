@@ -18,7 +18,7 @@ With this package, the work of adding a complete class reference to this documen
 1. The easiest way is to make the githubwiki.phar (contained in the package in the bin directory) available on the system and configure your project.
 2. For more control over the creation steps, the template can be used directly with phpDocumentor and the publication on github can be done with git and/or github-dektop. A corresponding bash script is included in the package for this purpose. 
 
-The use and configuration of both methods is explained in detail in the blog that was published for this package.  
+The use and configuration of both methods is explained in detail in the [blog that was published for this package](https://www.phpclasses.org/blog_post.html?view_post=2350&key=806993).  
 
 ## Donation
 If you like **githubwiki** please consider donating at **[Paypal](https://www.paypal.me/SKientzler/5.00EUR)**
