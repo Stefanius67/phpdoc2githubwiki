@@ -29,15 +29,22 @@ If you like **githubwiki** please consider donating at **[Paypal](https://www.pa
 
 # Create the githubwiki.phar
 The `githubwiki.phar` can be easily created using the **box** builder:
+
 1. Download latest version [from the github repository](https://github.com/box-project/box/releases/download/3.13.0/box.phar).
+
 2. Make it available on your system:
+
 	```
 	sudo mv box.phar /usr/local/bin/box
 	sudo chmod +x /usr/local/bin/box
 	```
+	
 3. change to the base directory of this package
+
 4. call the box builder
+
 	```
 	box build -v
 	```
+	
 5. The created `githubwiki.phar` can be found in the `bin` directory.
