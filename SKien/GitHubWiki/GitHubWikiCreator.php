@@ -3,9 +3,11 @@ declare(strict_types=1);
 
 namespace SKien\GitHubWiki;
 
+use SKien\Config\AbstractConfig;
 use SKien\Config\ConfigInterface;
 use SKien\Config\NullConfig;
 use SKien\Config\XMLConfig;
+use Phar;
 use lordgnu\CLICommander\CLICommander;
 
 /**
@@ -22,7 +24,7 @@ use lordgnu\CLICommander\CLICommander;
  */
 class GitHubWikiCreator
 {
-    protected const VERSION = '1.0.1';
+    protected const VERSION = '1.0.2';
     protected const TITLE = 'Class reference';
     protected const PHPDOC_CMD = 'phpDocumentor.phar';
     protected const CONFIG_FILE = 'githubwiki.xml';
@@ -154,11 +156,34 @@ class GitHubWikiCreator
     }
 
     /**
+     * Try to get a global configuration.
+     * If the script runs aas phar and the phar is not located in the current
+     * working directory, we check, if the exists an global configuration file.
+     * @return AbstractConfig|null
+     */
+    protected function getGlobalConfig() : ?AbstractConfig
+    {
+        $strPharPath = Phar::running(false);
+        if (strlen($strPharPath) > 0) {
+            $strPharPath = pathinfo($strPharPath, PATHINFO_DIRNAME);
+            if ($strPharPath != getcwd()) {
+                $strPharPath .= DIRECTORY_SEPARATOR . self::CONFIG_FILE;
+                if (file_exists($strPharPath)) {
+                    return new XMLConfig($strPharPath);
+                }
+            }
+        }
+        return null;
+    }
+
+    /**
      * Get the assigned config.
      * If config is specified as cmdline arg, this config is searched for. If
      * no config specified or file does not exist, we look for a default config
      * in the current workin directory.
-     * TODO: first look for a global config in the 'home' directory, and read
+     * If a global config exists, that will be loaded first and the loakl config
+     * is merged with it. Settings from the local config have priority!
+     * (local config value overwrite global setting!)
      * this before reading local one (merge)
      * If no config can be found, a NullConfig is created.
      */
@@ -173,11 +198,18 @@ class GitHubWikiCreator
                 $this->strConfigFile = self::CONFIG_FILE;
             }
         }
+        $oGlobaleConfig = $this->getGlobalConfig();
         if (file_exists($this->strConfigFile)) {
-            $this->oConfig = new XMLConfig($this->strConfigFile);
+            if ($oGlobaleConfig) {
+                $oConfig = new XMLConfig($this->strConfigFile);
+                $oGlobaleConfig->mergeWith($oConfig);
+                $this->oConfig = $oGlobaleConfig;
+            } else {
+                $this->oConfig = new XMLConfig($this->strConfigFile);
+            }
         } else {
             $this->strConfigFile = '';
-            $this->oConfig = new NullConfig();
+            $this->oConfig = $oGlobaleConfig ?? new NullConfig();
         }
     }
 

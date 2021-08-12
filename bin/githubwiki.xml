@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<githubwiki>
+	<options>
+		<quiet>false</quiet>
+		<verbose>true</verbose>
+		<debug>false</debug>
+		<norun>false</norun>
+	</options>
+	
+	<phpdoc>
+		<command>phpdoc30</command>
+	</phpdoc>
+	
+    <paths>
+        <cache>./wiki/cache</cache>
+    </paths>
+	
+	<visibilities>
+		<visibility>public</visibility>
+	</visibilities>            
+	
+	<ignore-tags>
+		<ignore-tag>author</ignore-tag>
+		<ignore-tag>version</ignore-tag>
+		<ignore-tag>copyright</ignore-tag>
+		<ignore-tag>codeCoverageIgnore</ignore-tag>
+	</ignore-tags>
+</githubwiki>
