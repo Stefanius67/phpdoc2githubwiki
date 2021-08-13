@@ -32,6 +32,8 @@ class GitHubWikiCreator
     protected const PHPDOC_CONFIG_TEMPLATE = 'phpdoc.template.xml';
     protected const PHPDOC_AUTOCONFIG = 'phpdoc-auto.xml';
     protected const HELP_FILE = 'githubwiki-help.txt';
+    protected const TEMPLATE_MAIN_FILE = 'template.xml';
+    protected const TEMPLATE_FOOTER_FILE = 'footer.md.twig';
     protected const MSG_ALLWAYS = 0;
     protected const MSG_VERBOSE = 1;
     protected const MSG_DEBUG = 2;
@@ -156,27 +158,6 @@ class GitHubWikiCreator
     }
 
     /**
-     * Try to get a global configuration.
-     * If the script runs aas phar and the phar is not located in the current
-     * working directory, we check, if the exists an global configuration file.
-     * @return AbstractConfig|null
-     */
-    protected function getGlobalConfig() : ?AbstractConfig
-    {
-        $strPharPath = Phar::running(false);
-        if (strlen($strPharPath) > 0) {
-            $strPharPath = pathinfo($strPharPath, PATHINFO_DIRNAME);
-            if ($strPharPath != getcwd()) {
-                $strPharPath .= DIRECTORY_SEPARATOR . self::CONFIG_FILE;
-                if (file_exists($strPharPath)) {
-                    return new XMLConfig($strPharPath);
-                }
-            }
-        }
-        return null;
-    }
-
-    /**
      * Get the assigned config.
      * If config is specified as cmdline arg, this config is searched for. If
      * no config specified or file does not exist, we look for a default config
@@ -211,6 +192,27 @@ class GitHubWikiCreator
             $this->strConfigFile = '';
             $this->oConfig = $oGlobaleConfig ?? new NullConfig();
         }
+    }
+
+    /**
+     * Try to get a global configuration.
+     * If the script runs aas phar and the phar is not located in the current
+     * working directory, we check, if the exists an global configuration file.
+     * @return AbstractConfig|null
+     */
+    protected function getGlobalConfig() : ?AbstractConfig
+    {
+        $strPharPath = Phar::running(false);
+        if (strlen($strPharPath) > 0) {
+            $strPharPath = pathinfo($strPharPath, PATHINFO_DIRNAME);
+            if ($strPharPath != getcwd()) {
+                $strPharPath .= DIRECTORY_SEPARATOR . self::CONFIG_FILE;
+                if (file_exists($strPharPath)) {
+                    return new XMLConfig($strPharPath);
+                }
+            }
+        }
+        return null;
     }
 
     /**
@@ -442,6 +444,19 @@ class GitHubWikiCreator
         $this->xcopy($strSrcPath, $strDstPath);
         $this->strPhpDocTemplate = $strDstPath;
 
+        // check, if a custom footer is defined or no footer should be created
+        $strCustomFooter = $this->oConfig->getString('footer');
+        if ($strCustomFooter !== '') {
+            if ($strCustomFooter == '0' || strtolower($strCustomFooter) == 'false') {
+                // don't create footer - the corresponding line must be removed from the template
+                $this->removeFooterFromTemplate();
+            } else {
+                // just create new twig template
+                $strCustomFooter = '{% block content %}' . PHP_EOL . $strCustomFooter . PHP_EOL . '{% endblock %}';
+                $strFooterPath = $this->strPhpDocTemplate . DIRECTORY_SEPARATOR . self::TEMPLATE_FOOTER_FILE;
+                file_put_contents($strFooterPath, $strCustomFooter);
+            }
+        }
         return '';
     }
 
@@ -558,6 +573,26 @@ class GitHubWikiCreator
                 $oParent->appendChild($oChild);
             }
         }
+    }
+
+    /**
+     * Remove the XML node that is responsible for creating the footer.
+     */
+    private function removeFooterFromTemplate() : void
+    {
+        $strTemplatePath = $this->strPhpDocTemplate . DIRECTORY_SEPARATOR . self::TEMPLATE_MAIN_FILE;
+        $oDOMDoc = new \DOMDocument();
+        $oDOMDoc->load($strTemplatePath);
+
+        $oXPath = new \DOMXPath($oDOMDoc);
+        $oNodelist = $oXPath->query("/template/transformations/*[@source='" . self::TEMPLATE_FOOTER_FILE . "']");
+        if ($oNodelist !== false && $oNodelist->length > 0) {
+            $oNode = $oNodelist->item(0);
+            if ($oNode->parentNode !== null) {
+                $oNode->parentNode->removeChild($oNode);
+            }
+        }
+        $oDOMDoc->save($strTemplatePath);
     }
 
     /**

@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<githubwiki>
+    <title>GitHubWiki Creator</title>
+	
+	<footer>Custom footer - *build with* ***[githubwiki](https://github.com/Stefanius67/phpdoc2githubwiki)*** / ({{ "now"|date("Y-m-d") }})</footer>
+	
+	<options>
+		<quiet>false</quiet>
+		<verbose>true</verbose>
+		<debug>false</debug>
+		<norun>false</norun>
+	</options>
+	
+	<phpdoc>
+		<command>phpdoc30</command>
+		<template>./template</template>
+	</phpdoc>
+	
+    <paths>
+        <output>./wiki/phpdoc2githubwiki.wiki</output>
+        <cache>./wiki/cache</cache>
+        <project></project>
+    </paths>
+	
+	<source>
+		<path>SKien/GitHubWiki</path>
+		<path>SKien/Config</path>
+		<path>lordgnu/CLICommander</path>
+	</source>
+
+	<visibilities>
+		<visibility>public</visibility>
+	</visibilities>            
+	
+	<ignore-tags>
+		<ignore-tag>author</ignore-tag>
+		<ignore-tag>version</ignore-tag>
+		<ignore-tag>copyright</ignore-tag>
+		<ignore-tag>codeCoverageIgnore</ignore-tag>
+	</ignore-tags>
+</githubwiki>

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <githubwiki>
     <title>GitHubWiki Creator</title>
-	
+
     <paths>
         <output>./wiki/phpdoc2githubwiki.wiki</output>
     </paths>
