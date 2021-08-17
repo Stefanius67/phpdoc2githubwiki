@@ -13,6 +13,7 @@
 {%- endfor %}){% if method.name != '__construct' and method.name != '__destruct' %}{{- method.response.type ? ' : '~method.response.type }}
 {% endif %}
 {% endautoescape %}
+
 ```
 {{ method.description|raw }}
 {% if method.deprecated %}* **Warning:** this method is **deprecated**. This means that this method will likely be removed in a future version.
