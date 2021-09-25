@@ -173,10 +173,13 @@ class GitHubWikiCreator
         // config specified as cmdline arg?
         $this->strConfigFile = self::CONFIG_FILE;
         if ($this->oCli->ArgumentPassed('config')) {
-            $this->strConfigFile = $this->oCli->GetArgumentValue('config');
-            if (!file_exists($this->strConfigFile)) {
-                // fall back to default...
-                $this->strConfigFile = self::CONFIG_FILE;
+            $strConfig = $this->oCli->GetArgumentValue('config');
+            if (is_string($strConfig)) {
+                $this->strConfigFile = $strConfig;
+                if (!file_exists($this->strConfigFile)) {
+                    // fall back to default...
+                    $this->strConfigFile = self::CONFIG_FILE;
+                }
             }
         }
         $oGlobaleConfig = $this->getGlobalConfig();
@@ -265,6 +268,9 @@ class GitHubWikiCreator
         $strValue = $strDefault;
         if ($this->oCli->ArgumentPassed($strName)) {
             $strValue = $this->oCli->GetArgumentValue($strName);
+        }
+        if (is_bool($strValue)) {
+            $strValue = '';
         }
         return $strValue;
     }
