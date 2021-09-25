@@ -539,20 +539,22 @@ class GitHubWikiCreator
     protected function xcopy(string $strSrcPath, string $strDstPath) : void
     {
         $dir = opendir($strSrcPath);
-        @mkdir($strDstPath);
-        while( $strFile = readdir($dir)) {
-            if (($strFile != '.') && ($strFile != '..')) {
-                $strSrcFile = $strSrcPath . '/' . $strFile;
-                $strDstFile = $strDstPath . '/' . $strFile;
-                if (is_dir($strSrcFile)) {
-                    // recursive call for subfolders
-                    $this->xcopy($strSrcFile, $strDstFile);
-                } else {
-                    copy($strSrcFile, $strDstFile);
+        if ($dir !== false) {
+            @mkdir($strDstPath);
+            while ($strFile = readdir($dir)) {
+                if (($strFile != '.') && ($strFile != '..')) {
+                    $strSrcFile = $strSrcPath . '/' . $strFile;
+                    $strDstFile = $strDstPath . '/' . $strFile;
+                    if (is_dir($strSrcFile)) {
+                        // recursive call for subfolders
+                        $this->xcopy($strSrcFile, $strDstFile);
+                    } else {
+                        copy($strSrcFile, $strDstFile);
+                    }
                 }
             }
+            closedir($dir);
         }
-        closedir($dir);
     }
 
     /**
@@ -565,7 +567,7 @@ class GitHubWikiCreator
     private function addChildNodes(\DOMDocument $oDOMDoc, string $strParent, string $strConfig, string $strChild) : void
     {
         $oList = $oDOMDoc->getElementsByTagName($strParent);
-        if ($oList->length == 1) {
+        if ($oList->length == 1 && $oList->item(0) !== null) {
             $oParent = $oList->item(0);
             $aValues = $this->oConfig->getArray($strConfig);
             foreach ($aValues as $strValue) {
@@ -588,7 +590,7 @@ class GitHubWikiCreator
         $oNodelist = $oXPath->query("/template/transformations/*[@source='" . self::TEMPLATE_FOOTER_FILE . "']");
         if ($oNodelist !== false && $oNodelist->length > 0) {
             $oNode = $oNodelist->item(0);
-            if ($oNode->parentNode !== null) {
+            if ($oNode != null && $oNode->parentNode !== null) {
                 $oNode->parentNode->removeChild($oNode);
             }
         }
@@ -744,7 +746,7 @@ class GitHubWikiCreator
     protected function makeAbsolutePath(string $strPath) : string
     {
         if (empty($strPath) || $strPath == ('.' . DIRECTORY_SEPARATOR)) {
-            return getcwd();
+            return getcwd() ?? '';
         }
         $strPath = rtrim($strPath, DIRECTORY_SEPARATOR);
         if (substr($strPath, 0, 1) == DIRECTORY_SEPARATOR || substr($strPath, 1, 1) == ':') {

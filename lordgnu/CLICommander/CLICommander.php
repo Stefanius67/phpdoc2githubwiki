@@ -50,7 +50,7 @@ class CLICommander {
 
     /**
      * Raw list of arguments passed at the time the script was invoked
-     * @var array
+     * @var array<mixed>
      */
     private $argv;
 
@@ -63,13 +63,13 @@ class CLICommander {
     /**
      * List of argument that were passed.  Stores short options (-v) and long
      * options (--verbose)
-     * @var array
+     * @var array<mixed>
      */
     private $argumentsPassed    =   array();
 
     /**
      * List of values associated to arguments passed to the running script
-     * @var array
+     * @var array<mixed>
      */
     private $argumentValues     =   array();
 
@@ -123,7 +123,7 @@ class CLICommander {
 
     /**
      * Default formats for output
-     * @var array
+     * @var array<string,string>
      */
     private $defaults = array(
         'foreground'    =>  'default',
@@ -180,7 +180,7 @@ class CLICommander {
 
     /**
      * List and values of ANSI foreground colors
-     * @var array
+     * @var array<string,int>
      */
     protected $foregroundColors = array(
         'default'       =>  39,
@@ -203,7 +203,7 @@ class CLICommander {
 
     /**
      * List and values of ANSI background colors
-     * @var array
+     * @var array<string,int>
      */
     protected $backgroundColors = array(
         'default'       =>  49,
@@ -226,7 +226,7 @@ class CLICommander {
 
     /**
      * List and values of ANSI styles
-     * @var array
+     * @var array<string,int>
      */
     protected $styles = array(
         'default'           =>  0,
@@ -245,7 +245,7 @@ class CLICommander {
 
     /**
      * List and values of xterm colors
-     * @var array
+     * @var array<string|int,int>
      */
     protected $xtermColors = array(
         '000000'=>16, '00005F'=>17, '000087'=>18, '0000AF'=>19, '0000D7'=>20,
@@ -424,7 +424,7 @@ class CLICommander {
      * )
      * </code>
      *
-     * @return array
+     * @return array<mixed>
      */
     public function GetArguments() : array
     {
@@ -519,7 +519,7 @@ class CLICommander {
      * echoed as the user types characters.  Very useful for passwords.
      *
      * @param string $text The text to display
-     * @param string|integer|array $fgColor The color to use for the text displayed or a style array to use for all the formatting
+     * @param string|integer|array<string,int|string> $fgColor The color to use for the text displayed or a style array to use for all the formatting
      * @param string|integer $bgColor The color to use for the background
      * @param string $style The style to use for the text displayed
      *
@@ -537,7 +537,7 @@ class CLICommander {
      * Returns the string entered by the user.  Input is not masked.
      *
      * @param string $text The text to display
-     * @param string|integer|array $fgColor The color to use for the text displayed or a style array to use for all the formatting
+     * @param string|integer|array<string,int|string> $fgColor The color to use for the text displayed or a style array to use for all the formatting
      * @param string|integer $bgColor The color to use for the background
      * @param string $style The style to use for the text displayed
      *
@@ -557,7 +557,7 @@ class CLICommander {
      *
      * @param boolean $return When true, just returns the escape sequence of the reset
      *
-     * @return string|void
+     * @return string
      */
     public function Reset(bool $return = false)
     {
@@ -571,6 +571,7 @@ class CLICommander {
         if (!$return) {
             $this->SystemWrite(sprintf($this->escape, 0));
             $this->SystemWrite($this->GetFormatString($this->defaults['foreground'], $this->defaults['background'], $this->defaults['style']));
+            return '';
         } else {
             return sprintf($this->escape, 0) . $this->GetFormatString($this->defaults['foreground'], $this->defaults['background'], $this->defaults['style']);
         }
@@ -642,7 +643,7 @@ class CLICommander {
      * If you need a newline character, use WriteLine()
      *
      * @param string $text The text to display
-     * @param string|integer|array $fgColor The color to use for the text displayed or a style array to use for all the formatting
+     * @param string|integer|array<string,int|string> $fgColor The color to use for the text displayed or a style array to use for all the formatting
      * @param string|integer $bgColor The color to use for the background
      * @param string $style The style to use for the text displayed
      */
@@ -694,7 +695,7 @@ class CLICommander {
      * Write a string to the terminal with defined formatting and auto append a newline character
      *
      * @param string $text The text to display
-     * @param string|integer|array $fgColor The color to use for the text displayed or a style array to use for all the formatting
+     * @param string|integer|array<string,int|string> $fgColor The color to use for the text displayed or a style array to use for all the formatting
      * @param string|integer $bgColor The color to use for the background
      * @param string $style The style to use for the text displayed
      */
@@ -740,9 +741,9 @@ class CLICommander {
         }
 
         // Breakout the RGB colors
-        $r = hexdec(substr($rgbString, 0, 2));
-        $g = hexdec(substr($rgbString, 2, 2));
-        $b = hexdec(substr($rgbString, 4, 2));
+        $r = (int)hexdec(substr($rgbString, 0, 2));
+        $g = (int)hexdec(substr($rgbString, 2, 2));
+        $b = (int)hexdec(substr($rgbString, 4, 2));
 
         // Check for Greyscale color
         if ($r == $g && $g == $b || $this->IsAlmostGrey($r, $g, $b)) {
@@ -857,7 +858,7 @@ class CLICommander {
             } else {
                 if ($this->xtermSupport === true) {
                     // Try this as an xterm color
-                    $fgColor = strtoupper($fgColor);
+                    $fgColor = strtoupper((string)$fgColor);
 
                     if (array_key_exists($fgColor, $this->xtermColors)) {
                         // Good xterm color
@@ -890,7 +891,7 @@ class CLICommander {
             } else {
                 if ($this->xtermSupport === true) {
                     // Try this as an xterm color
-                    $bgColor = strtoupper($bgColor);
+                    $bgColor = strtoupper((string)$bgColor);
 
                     if (array_key_exists($bgColor, $this->xtermColors)) {
                         // Good xterm color
@@ -962,7 +963,7 @@ class CLICommander {
     /**
      * Parse format code from template text and return format strings
      *
-     * @param array $matches List of matched text from ParseTemplate
+     * @param array<string,string> $matches List of matched text from ParseTemplate
      *
      * @return string
      */
