@@ -25,7 +25,7 @@
 | Parameter | Type | Description |
 |-----------|------|-------------|
 {% for argument in method.arguments %}
-| `{{ argument.name }}` | **{{ argument.type ? argument.type|replace({'|':' &#124; '})|raw }}** | {{ github_wiki.FormatDescription(argument.description) }} |
+| `{{ argument.name }}` | **{{ argument.type ? argument.type|replace({'|':' &#124; '})|raw }}** {% if argument.byReference %} *(Ref.)* {% endif %} | {{ github_wiki.FormatDescription(argument.description) }} |
 {% endfor %}
 {% endif %}{# method.arguments is not empty #}
 
