@@ -14,7 +14,7 @@ Full name:     **{{ node.FullyQualifiedStructuralElementName }}**
 
 ---
 
-**{{ node.summary|raw }}**
+### {{ node.summary|raw }}
 
 {{ node.description|raw }}
 
@@ -49,7 +49,11 @@ Full name:     **{{ node.FullyQualifiedStructuralElementName }}**
 | Constant  | Description |
 |:---       |:---  |
 {% for constant in node.constants %}
+{% if constant.name|slice(0, 2) != '__' %}
 |<a name="{{ constant.name|lower }}">`{{constant.name}}`|{{constant.summary|raw}}|
+{% else %}
+|**{{constant.summary|raw}}**||
+{% endif %}
 {% endfor %}{# for constant #}
 {% endif %}{# if constants #}
 
