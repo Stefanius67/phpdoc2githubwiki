@@ -182,18 +182,14 @@ class GitHubWikiCreator
                 }
             }
         }
-        $oGlobaleConfig = $this->getGlobalConfig();
+        $oGlobalConfig = $this->getGlobalConfig();
         if (file_exists($this->strConfigFile)) {
-            if ($oGlobaleConfig) {
-                $oConfig = new XMLConfig($this->strConfigFile);
-                $oGlobaleConfig->mergeWith($oConfig);
-                $this->oConfig = $oGlobaleConfig;
-            } else {
-                $this->oConfig = new XMLConfig($this->strConfigFile);
-            }
+            $oConfig = new XMLConfig($this->strConfigFile);
+            $oGlobalConfig->mergeWith($oConfig);
+            $this->oConfig = $oGlobalConfig;
         } else {
             $this->strConfigFile = '';
-            $this->oConfig = $oGlobaleConfig ?? new NullConfig();
+            $this->oConfig = $oGlobalConfig;
         }
     }
 
@@ -201,9 +197,9 @@ class GitHubWikiCreator
      * Try to get a global configuration.
      * If the script runs aas phar and the phar is not located in the current
      * working directory, we check, if the exists an global configuration file.
-     * @return AbstractConfig|null
+     * @return AbstractConfig
      */
-    protected function getGlobalConfig() : ?AbstractConfig
+    protected function getGlobalConfig() : AbstractConfig
     {
         $strPharPath = Phar::running(false);
         if (strlen($strPharPath) > 0) {
@@ -215,7 +211,7 @@ class GitHubWikiCreator
                 }
             }
         }
-        return null;
+        return new NullConfig();
     }
 
     /**
@@ -269,10 +265,7 @@ class GitHubWikiCreator
         if ($this->oCli->ArgumentPassed($strName)) {
             $strValue = $this->oCli->GetArgumentValue($strName);
         }
-        if (is_bool($strValue)) {
-            $strValue = '';
-        }
-        return $strValue;
+        return is_string($strValue) ? $strValue : '';
     }
 
     /**
@@ -545,8 +538,7 @@ class GitHubWikiCreator
     protected function xcopy(string $strSrcPath, string $strDstPath) : void
     {
         $dir = opendir($strSrcPath);
-        if ($dir !== false) {
-            @mkdir($strDstPath);
+        if ($dir !== false && mkdir($strDstPath) === true) {
             while ($strFile = readdir($dir)) {
                 if (($strFile != '.') && ($strFile != '..')) {
                     $strSrcFile = $strSrcPath . '/' . $strFile;
