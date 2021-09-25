@@ -1,6 +1,6 @@
 # Builder and Template to create a github wiki with phpDocumentor 3
 
- ![Latest Stable Version](https://img.shields.io/badge/release-v1.0.0-brightgreen.svg)
+ ![Latest Stable Version](https://img.shields.io/badge/release-v1.0.4-brightgreen.svg)
  [![Donate](https://img.shields.io/static/v1?label=donate&message=PayPal&color=orange)](https://www.paypal.me/SKientzler/5.00EUR)
  ![Minimum PHP Version](https://img.shields.io/badge/php-%3E%3D%207.4-8892BF.svg)
  
