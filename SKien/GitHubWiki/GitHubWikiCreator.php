@@ -106,7 +106,7 @@ class GitHubWikiCreator
         $this->init();
         if ($this->isValid()) {
             if ($this->build()) {
-                $this->writeConsole("> wiki \"" . $this->strTitle .  "\" successfull generated.\n");
+                $this->writeConsole("> wiki \"" . $this->strTitle . "\" successfull generated.\n");
                 return true;
             }
         }
@@ -323,7 +323,7 @@ class GitHubWikiCreator
     protected function validateGit() : string
     {
         $strError = '';
-        if (shell_exec('git --version 2>'. $this->strNullDev) === null) {
+        if (shell_exec('git --version 2>' . $this->strNullDev) === null) {
             $strError = "- git not found!";
         }
         return $strError;
@@ -338,7 +338,7 @@ class GitHubWikiCreator
     protected function validatePhpDocumentor() : string
     {
         $strError = '';
-        $strResult = shell_exec($this->strPhpDocCmd . ' --version 2>'. $this->strNullDev);
+        $strResult = shell_exec($this->strPhpDocCmd . ' --version 2>' . $this->strNullDev);
         if ($strResult === null) {
             $strError = "- phpDocumentor not found! Command: " . $this->strPhpDocCmd;
         } elseif (substr($strResult, 0, 16) != 'phpDocumentor v3') {
@@ -403,14 +403,14 @@ class GitHubWikiCreator
         if (empty($this->strPhpDocTemplate)) {
             $strError = $this->copyTemplate();
         } elseif (!file_exists($this->strPhpDocTemplate)) {
-            $strError = "- phpDocumentor template [" . $this->strPhpDocTemplate ."] not found!";
+            $strError = "- phpDocumentor template [" . $this->strPhpDocTemplate . "] not found!";
         }
 
         // check for existence of external phpdoc confifuration, if specified or auto create
         if (empty($this->strPhpDocConfigFile)) {
             $strError .= "\n" . $this->createPhpDocConfig();
-        } elseif(!file_exists($this->strPhpDocConfigFile)) {
-            $strError .= "\n- phpDocumentor configuration [" . $this->strPhpDocConfigFile ."] not found!";
+        } elseif (!file_exists($this->strPhpDocConfigFile)) {
+            $strError .= "\n- phpDocumentor configuration [" . $this->strPhpDocConfigFile . "] not found!";
         }
         return trim($strError);
     }
@@ -517,7 +517,7 @@ class GitHubWikiCreator
      */
     protected function build() : bool
     {
-        $this->writeConsole("> creating GitHub wiki {cyan}\"" . $this->strTitle . "\"{reset} in {cyan}[" . $this->strWikiPath. "]{reset}", self::MSG_VERBOSE);
+        $this->writeConsole("> creating GitHub wiki {cyan}\"" . $this->strTitle . "\"{reset} in {cyan}[" . $this->strWikiPath . "]{reset}", self::MSG_VERBOSE);
         if (!empty($this->strConfigFile)) {
             $this->writeConsole("> using config file {cyan}[" . $this->strConfigFile . "]{reset}", self::MSG_VERBOSE);
         }
@@ -540,11 +540,11 @@ class GitHubWikiCreator
     {
         $dir = opendir($strSrcPath);
         @mkdir($strDstPath);
-        while( $strFile = readdir($dir) ) {
+        while( $strFile = readdir($dir)) {
             if (($strFile != '.') && ($strFile != '..')) {
                 $strSrcFile = $strSrcPath . '/' . $strFile;
                 $strDstFile = $strDstPath . '/' . $strFile;
-                if (is_dir($strSrcFile) ) {
+                if (is_dir($strSrcFile)) {
                     // recursive call for subfolders
                     $this->xcopy($strSrcFile, $strDstFile);
                 } else {
@@ -648,7 +648,7 @@ class GitHubWikiCreator
             $this->writeConsole("{lightyellow}" . $strResponse . "{reset}", self::MSG_VERBOSE);
         }
         $strColor = ($iResult == 0) ? '{lightgreen}' : '{lightred}';
-        $this->writeConsole($strColor ."  phpDocumentor > result: " . $iResult . "{reset}", self::MSG_DEBUG);
+        $this->writeConsole($strColor . "  phpDocumentor > result: " . $iResult . "{reset}", self::MSG_DEBUG);
         return ($iResult == 0);
     }
 
@@ -701,7 +701,7 @@ class GitHubWikiCreator
             $this->writeConsole("{lightyellow}" . $strResponse . "{reset}", self::MSG_VERBOSE);
         }
         $strColor = ($iResult == 0) ? '{lightgreen}' : '{lightred}';
-        $this->writeConsole($strColor ."  git > result: " . $iResult . " (command: " . $strCommand . "){reset}", self::MSG_DEBUG);
+        $this->writeConsole($strColor . "  git > result: " . $iResult . " (command: " . $strCommand . "){reset}", self::MSG_DEBUG);
         return $iResult;
     }
 
