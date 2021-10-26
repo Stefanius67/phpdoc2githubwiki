@@ -1,6 +1,18 @@
 {% import "github_wiki.twig" as github_wiki %}
 ### {{ method.name }}
 {{ method.summary|raw }}
+{# todo ========= #}
+{% if method.tags.todo is not empty %}
+> **TODO:**
+{% for todo in method.tags.todo %}
+{% if todo.description is not empty %}
+> - {{ todo.description|raw }}
+{% endif %}
+{% endfor %}
+
+{% endif %}{# method.tags.todo #}
+
+{# end todo ========= #}
 {# Method signature #}
 
 ```php

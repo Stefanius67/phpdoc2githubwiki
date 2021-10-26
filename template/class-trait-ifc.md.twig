@@ -29,7 +29,18 @@ Full name:     **{{ node.FullyQualifiedStructuralElementName }}**
 
 {% endif %}{# node.tags.SKienImage #}
 {# end custom image ========= #}
+{# todo ========= #}
+{% if node.tags.todo is not empty %}
+> **TODO:**
+{% for todo in node.tags.todo %}
+{% if todo.description is not empty %}
+> - {{ todo.description|raw }}
+{% endif %}
+{% endfor %}
 
+{% endif %}{# node.tags.todo #}
+
+{# end todo ========= #}
 {% if node.tags.see is not empty or node.tags.link is not empty %}
 **See Also:**
 {% for see in node.tags.see %}
