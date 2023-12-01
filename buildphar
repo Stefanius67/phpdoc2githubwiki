@@ -1,0 +1,3 @@
+box build -v
+sudo cp bin/githubwiki.phar /usr/local/bin/githubwiki
+sudoo chmod +x /usr/local/bin/githubwiki

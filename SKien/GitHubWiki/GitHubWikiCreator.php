@@ -538,7 +538,9 @@ class GitHubWikiCreator
     protected function xcopy(string $strSrcPath, string $strDstPath) : void
     {
         $dir = opendir($strSrcPath);
-        if ($dir !== false && mkdir($strDstPath) === true) {
+        $this->writeConsole("> {red}mkdir(" . $strDstPath . "){reset}", self::MSG_DEBUG);
+        @mkdir($strDstPath) === true;
+        if ($dir !== false) {
             while ($strFile = readdir($dir)) {
                 if (($strFile != '.') && ($strFile != '..')) {
                     $strSrcFile = $strSrcPath . '/' . $strFile;
@@ -547,6 +549,7 @@ class GitHubWikiCreator
                         // recursive call for subfolders
                         $this->xcopy($strSrcFile, $strDstFile);
                     } else {
+                        $this->writeConsole("> {red}copy(" . $strSrcFile . ", " . $strDstFile . "){reset}", self::MSG_DEBUG);
                         copy($strSrcFile, $strDstFile);
                     }
                 }
