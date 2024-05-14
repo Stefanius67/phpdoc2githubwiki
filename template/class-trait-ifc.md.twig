@@ -79,9 +79,26 @@ Full name:     **{{ node.FullyQualifiedStructuralElementName }}**
 {% for property in properties(node)|sortByVisibility %}
 |{{ property.name }}|{{ property.summary|raw }}|
 {% endfor %}
-{% for method in methods(node)|sortByVisibility %}
+{% set constructor_found = false %}
+{% if node.methods|length > 0 %}
+{% for method in node.methods|sortByVisibility %}
+{% if method.name != '__construct' or constructor_found == false %}
+{% set constructor_found = true %}
+{% endif %}{# if method.name != ... #}
 | [{{method.name}}](#{{method.name|lower}}) |{{ method.summary|replace({"\n": " ", "\r": " ", "\t": " "})|raw }}|
 {% endfor %}
+{% endif %}{# if methods #}
+{# Check inherited methods #}
+{% if node.InheritedMethods|length > 0 %}
+|**Inherited methods**| |
+{% for method in node.InheritedMethods|sortByVisibility %}
+{# constructor(s) from parent(s) only matter if no found so far ... #}
+{% if method.name != '__construct' or constructor_found == false %}
+{% set constructor_found = true %}
+| [{{method.name}}](#{{method.name|lower}}) |{{ method.summary|replace({"\n": " ", "\r": " ", "\t": " "})|raw }}|
+{% endif %}{# if method.name != '__construct' #}
+{% endfor %}
+{% endif %}{# if InheritedMethods #}
 {% endif %}
 
 {% set constructor_found = false %}
