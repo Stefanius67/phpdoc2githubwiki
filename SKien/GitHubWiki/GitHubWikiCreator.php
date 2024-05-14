@@ -70,6 +70,8 @@ class GitHubWikiCreator
     protected bool $bQuiet = false;
     /** @var bool suppress git operations    */
     protected bool $bSuppressRun = false;
+    /** @var bool suppress phpdoc version check    */
+    protected bool $bSuppressPhpDocCheck = false;
 
     /** @var string Null dece depends on operating system    */
     private string $strNullDev = '';
@@ -232,6 +234,7 @@ class GitHubWikiCreator
         $this->bDebug = $this->oConfig->getBool('options.debug');
         $this->bQuiet = $this->oConfig->getBool('options.quiet');
         $this->bSuppressRun = $this->oConfig->getBool('options.norun');
+        $this->bSuppressPhpDocCheck = $this->oConfig->getBool('options.nophpdoccheck');
     }
 
     /**
@@ -337,11 +340,13 @@ class GitHubWikiCreator
     protected function validatePhpDocumentor() : string
     {
         $strError = '';
-        $strResult = shell_exec($this->strPhpDocCmd . ' --version 2>' . $this->strNullDev);
-        if ($strResult === null) {
-            $strError = "- phpDocumentor not found! Command: " . $this->strPhpDocCmd;
-        } elseif (substr($strResult, 0, 16) != 'phpDocumentor v3') {
-            $strError = "- at least version 3.0 of phpDocumentor is needed! found " . $strResult;
+        if (!$this->bSuppressPhpDocCheck) {
+            $strResult = shell_exec($this->strPhpDocCmd . ' --version 2>' . $this->strNullDev);
+            if ($strResult === null) {
+                $strError = "- phpDocumentor not found! Command: " . $this->strPhpDocCmd;
+            } elseif (substr($strResult, 0, 16) != 'phpDocumentor v3') {
+                $strError = "- at least version 3.0 of phpDocumentor is needed! found " . $strResult;
+            }
         }
         return $strError;
     }
@@ -440,6 +445,7 @@ class GitHubWikiCreator
                 return "- Cannot create the template path [" . $strDstPath . "]!";
             }
         }
+        $this->writeConsole("> using templates from {cyan}[" . $strSrcPath . "]{reset}", self::MSG_VERBOSE);
         $this->xcopy($strSrcPath, $strDstPath);
         $this->strPhpDocTemplate = $strDstPath;
 
