@@ -48,5 +48,5 @@ argument.description|replace({'|':'&#124;'})|nl2br|replace({"\n": "", "\r": "", 
 #}
 {% macro Image(image) %}
 {% set imagepath = './images/' %}
-![{{ image.description|lower|split('.')[0] }}]({{ imagepath ~ image.description }}){% endmacro %}
+![{{ image.description|lower|split('.')[0] }}]({{ imagepath ~ image.description }}) {% endmacro %}
 
